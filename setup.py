@@ -26,8 +26,8 @@ setup(
     ],
     python_requires=">=3.8, <3.9",
     install_requires=[
-        "apache-airflow[google]==2.4.3",
-        "apache-airflow-providers-google==8.9.0",
+        "apache-airflow[google]>=2.4.3",
+        "apache-airflow-providers-google",
     ],
     package_dir={'': 'src'},
     py_modules=[splitext(basename(path))[0] for path in glob('src/*.py')],
