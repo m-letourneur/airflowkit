@@ -12,15 +12,15 @@ from airflow.exceptions import AirflowException
 from airflow.sensors.base import BaseSensorOperator
 from airflow.providers.google.cloud.hooks.gcs import GCSHook
 
-from airflowkit.triggers.gcs_blobs_trigger import GCSBlobsTrigger
+from airflowkit.triggers.gcs_any_blobs_trigger import GCSAnyBlobsTrigger
 
 if TYPE_CHECKING:
     from airflow.utils.context import Context
 
 
-class GCSObjectsExistenceAsyncSensor(BaseSensorOperator):
+class GCSAnyObjectsExistenceAsyncSensor(BaseSensorOperator):
     """
-    Checks for the existence of files in Google Cloud Storage.
+    Checks for the existence of at least one file of a list in Google Cloud Storage.
 
     :param bucket: The Google Cloud Storage bucket where the object is.
     :param objects: The names of the objects to check in the Google cloud
@@ -83,13 +83,13 @@ class GCSObjectsExistenceAsyncSensor(BaseSensorOperator):
         responses = []
         for object in self.objects:
             responses.append(hook.exists(self.bucket, object, self.retry))
-        return all(responses)
+        return any(responses)
 
     def execute(self, context: Context) -> None:
         """Airflow runs this method on the worker and defers using the trigger."""
         self.defer(
             timeout=timedelta(seconds=self.timeout),
-            trigger=GCSBlobsTrigger(
+            trigger=GCSAnyBlobsTrigger(
                 bucket=self.bucket,
                 objects_names=self.objects,
                 poke_interval=self.poke_interval,
@@ -111,7 +111,7 @@ class GCSObjectsExistenceAsyncSensor(BaseSensorOperator):
         if event["status"] == "error":
             raise AirflowException(event["message"])
         self.log.info(
-            "%d files %s were found in bucket %s.",
+            "At least one of the %d files %s were found in bucket %s.",
             len(self.objects),
             self.objects,
             self.bucket,

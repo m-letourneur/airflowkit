@@ -26,7 +26,7 @@ setup(
     ],
     python_requires=">=3.8, <3.9",
     install_requires=[
-        "apache-airflow[google]>=2.4.3",
+        "apache-airflow[google]>=2.5.3",
         "apache-airflow-providers-google",
     ],
     package_dir={'': 'src'},
