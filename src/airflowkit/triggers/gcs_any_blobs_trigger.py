@@ -9,9 +9,9 @@ from airflow.providers.google.cloud.hooks.gcs import GCSAsyncHook
 from airflow.triggers.base import BaseTrigger, TriggerEvent
 
 
-class GCSBlobsTrigger(BaseTrigger):
+class GCSAnyBlobsTrigger(BaseTrigger):
     """
-    A trigger that fires if it finds the requested files or folders present in the given bucket.
+    A trigger that fires if it finds at least one of requested files or folders present in the given bucket.
 
     :param bucket: the bucket in the google cloud storage where the objects are residing.
     :param objects_names: list of files or folders present in the bucket
@@ -37,7 +37,7 @@ class GCSBlobsTrigger(BaseTrigger):
     def serialize(self) -> Tuple[str, Dict[str, Any]]:
         """Serializes GCSBlobsTrigger arguments and classpath."""
         return (
-            "airflowkit.triggers.gcs_blobs_trigger.GCSBlobsTrigger",
+            "airflowkit.triggers.gcs_any_blobs_trigger.GCSAnyBlobsTrigger",
             {
                 "bucket": self.bucket,
                 "objects_names": self.objects_names,
@@ -52,7 +52,7 @@ class GCSBlobsTrigger(BaseTrigger):
         try:
             hook = self._get_async_hook()
             while True:
-                res = await self._objects_exist(
+                res = await self._at_least_one_object_exist(
                     hook=hook, bucket_name=self.bucket, objects_names=self.objects_names
                 )
                 if res == "success":
@@ -65,11 +65,11 @@ class GCSBlobsTrigger(BaseTrigger):
     def _get_async_hook(self) -> GCSAsyncHook:
         return GCSAsyncHook(gcp_conn_id=self.google_cloud_conn_id, **self.hook_params)
 
-    async def _objects_exist(
+    async def _at_least_one_object_exist(
         self, hook: GCSAsyncHook, bucket_name: str, objects_names: List[str]
     ) -> str:
         """
-        Checks for the existence of files/folders in Google Cloud Storage.
+        Checks for the existence of at least one files/folders in Google Cloud Storage.
 
         :param bucket_name: The Google Cloud Storage bucket where the object is.
         :param objects_names: The names of the blobs to check in the Google cloud
@@ -88,6 +88,6 @@ class GCSBlobsTrigger(BaseTrigger):
                     self.log.debug(f"Not found GCS blob: {object_name}!")
                     responses.append(False)
 
-            if all(responses):
+            if any(responses) or len(objects_names) == 0:
                 return "success"
             return "pending"
