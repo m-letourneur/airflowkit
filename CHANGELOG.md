@@ -1,3 +1,7 @@
+## 0.0.5 (2024-01-31)
+
+ - Updated Python version allowance to >= 3.8 and  < 3.12
+
 ## 0.0.4 (2023-07-31)
 
  - Make GCSAnyObjectsExistenceAsyncSensor successful for empty list of objects 
